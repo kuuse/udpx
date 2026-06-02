@@ -1,3 +1,9 @@
+# WIP: `udpx` fork
+
+**Work In Progress**
+
+The purpose with this `udpx` fork is to add a `--src-ip` option.
+
 ![Alt text](screenshots/udpx_logo.png)
 # 
 Fast and lightweight, UDPX is a single-packet UDP scanner written in Go that supports the discovery of over 45 services with the ability to add custom ones. It is easy to use and portable, and can be run on Linux, Mac OS, and Windows. Unlike internet-wide scanners like zgrab2 and zmap, UDPX is designed for portability and ease of use.
