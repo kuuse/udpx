@@ -1,8 +1,14 @@
 # WIP: `udpx` fork
 
-**Work In Progress**
+## This is a WIP (Work In Progress)
 
-The purpose with this `udpx` fork is to add a `--src-ip` option.
+Small improvements to `udpx`, with a few added options:
+
+- **DONE :** 
+  - `-q` : Quiet option. Suppresses banner and progress.
+  - `-o -` : Write JSONL format to stdout instead of writing to file.
+- **TODO :**
+  - `--src-ip` : Source/spoof IP address option. Use an alternative IP address as source.
 
 ![Alt text](screenshots/udpx_logo.png)
 # 

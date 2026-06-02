@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"math/rand"
 	"os"
@@ -18,7 +19,26 @@ import (
 )
 
 func main() {
-	fmt.Printf(`%s
+	// Parse options FIRST so -q / -o '-' can influence where the banner goes
+	// (or whether it's printed at all).
+	opts := utils.ParseOptions()
+
+	// Output channels:
+	//   - stdoutJsonl == true  => "-o -" mode: stdout is reserved for JSONL records,
+	//                             so the banner goes to stderr and so do log lines.
+	//   - opts.Arg_q  == true  => quiet mode: suppress banner and silence log.Printf.
+	stdoutJsonl := opts.Arg_o == "-"
+	bannerW := io.Writer(os.Stdout)
+	if stdoutJsonl {
+		bannerW = os.Stderr
+	}
+	if opts.Arg_q {
+		// Drop banner entirely; route Go's default logger (which writes to stderr) to /dev/null.
+		bannerW = io.Discard
+		log.SetOutput(io.Discard)
+	}
+
+	fmt.Fprintf(bannerW, `%s
         __  ______  ____ _  __
        / / / / __ \/ __ \ |/ /
       / / / / / / / /_/ /   / 
@@ -27,8 +47,6 @@ func main() {
          v1.0.7, by @nullt3r
 
 %s`, colors.SetColor().Cyan, colors.SetColor().Reset)
-
-	opts := utils.ParseOptions()
 
 	var targets []string
 	var toscan []string
@@ -110,15 +128,23 @@ func main() {
 		close(comm)
 	}()
 
-	if len(opts.Arg_o) != 0 {
-		f, err := os.Create(opts.Arg_o)
-
+	// Output sink for JSONL records:
+	//   - "-o -"      => os.Stdout (no file handle to manage)
+	//   - "-o <path>" => append-mode file (opened once up front, closed at exit)
+	//   - empty       => no JSONL emission
+	var jsonlW io.Writer
+	if stdoutJsonl {
+		jsonlW = os.Stdout
+	} else if len(opts.Arg_o) != 0 {
+		// Note: original code re-opened the file for every record. We open once
+		// here in append+create mode so writes are buffered by the OS and the
+		// fd is closed cleanly at exit.
+		f, err := os.OpenFile(opts.Arg_o, os.O_APPEND|os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 		if err != nil {
 			log.Fatalf("%s[!]%s Error creating output file: %s", colors.SetColor().Red, colors.SetColor().Reset, err)
 		}
-
 		defer f.Close()
-
+		jsonlW = f
 		log.Printf("[+] Results will be written to: %s", opts.Arg_o)
 	}
 
@@ -129,23 +155,14 @@ func main() {
 			log.Printf("[+] Received packet: %s%s%s...", colors.SetColor().Yellow, hex.EncodeToString(message.ResponseData), colors.SetColor().Reset)
 		}
 
-		if len(opts.Arg_o) != 0 {
-			json, err := json.Marshal(&message)
-
+		if jsonlW != nil {
+			b, err := json.Marshal(&message)
 			if err != nil {
 				log.Fatalf("%s[!]%s Error: %s", colors.SetColor().Red, colors.SetColor().Reset, err)
 			}
-
-			f, err := os.OpenFile(opts.Arg_o, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
-
-			if err != nil {
-				log.Fatalf("%s[!]%s Error opening output file: %s", colors.SetColor().Red, colors.SetColor().Reset, err)
+			if _, err := jsonlW.Write(append(b, '\n')); err != nil {
+				log.Fatalf("%s[!]%s Error writing output: %s", colors.SetColor().Red, colors.SetColor().Reset, err)
 			}
-
-			if _, err = f.WriteString(string(json) + "\n"); err != nil {
-				log.Fatalf("%s[!]%s Error writing output file: %s", colors.SetColor().Red, colors.SetColor().Reset, err)
-			}
-
 		}
 	}
 

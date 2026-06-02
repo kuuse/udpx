@@ -16,6 +16,7 @@ type Options struct {
 	Arg_st int
 	Arg_sp bool
 	Arg_s  string
+	Arg_q  bool
 }
 
 func ParseOptions() *Options {
@@ -28,6 +29,7 @@ func ParseOptions() *Options {
 	flag.BoolVar(&opts.Arg_nr, "nr", false, "Do not randomize addresses")
 	flag.IntVar(&opts.Arg_st, "w", 500, "Maximum time to wait for a response (socket timeout) in ms")
 	flag.BoolVar(&opts.Arg_sp, "sp", false, "Show received packets (only first 32 bytes)")
+	flag.BoolVar(&opts.Arg_q, "q", false, "Quiet mode: suppress banner and progress log lines (results still emitted)")
 
 	flag.Parse()
 
