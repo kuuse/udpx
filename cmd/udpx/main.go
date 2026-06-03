@@ -9,13 +9,13 @@ import (
 	"math/rand"
 	"net"
 	"os"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/nullt3r/udpx/pkg/colors"
 	"github.com/nullt3r/udpx/pkg/probes"
 	"github.com/nullt3r/udpx/pkg/scan"
+	"github.com/nullt3r/udpx/pkg/targets"
 	"github.com/nullt3r/udpx/pkg/utils"
 )
 
@@ -49,7 +49,7 @@ func main() {
 
 %s`, colors.SetColor().Cyan, colors.SetColor().Reset)
 
-	var targets []string
+	var targetList []string
 	var toscan []string
 
 	if len(opts.Arg_t) == 0 && len(opts.Arg_tf) == 0 {
@@ -61,23 +61,17 @@ func main() {
 		if err != nil {
 			log.Fatalf("%s[!]%s Error while loading targets from file: %s", colors.SetColor().Red, colors.SetColor().Reset, err)
 		}
-		targets = val
+		targetList = val
 	} else if len(opts.Arg_t) != 0 {
-		targets = []string{opts.Arg_t}
+		targetList = []string{opts.Arg_t}
 	}
 
-	for _, target := range targets {
-		if strings.Contains(target, "/") {
-			val, err := utils.IpsFromCidr(target)
-
-			if err != nil {
-				log.Fatalf("%s[!]%s Error parsing IP range: %s", colors.SetColor().Red, colors.SetColor().Reset, err)
-			}
-
-			toscan = append(toscan, val...)
-		} else {
-			toscan = append(toscan, target)
+	for _, target := range targetList {
+		ips, err := targets.Parse(target)
+		if err != nil {
+			log.Fatalf("%s[!]%s Error parsing target %q: %s", colors.SetColor().Red, colors.SetColor().Reset, target, err)
 		}
+		toscan = append(toscan, ips...)
 	}
 
 	if len(opts.Arg_s) != 0 {

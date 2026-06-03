@@ -1,22 +1,25 @@
-# WIP: `udpx` fork
+# NOTE: This is an `udpx` fork
 
-## This is a WIP (Work In Progress)
+[Goto the original `udpx` repository](https://github.com/nullt3r/udpx)
 
-Small improvements to `udpx`, with a few added options:
+Small enhancements to `udpx`:
 
-- **DONE :** 
-  - `-q` : Quiet option. Suppresses banner and progress.
-  - `-o -` : Write JSONL format to stdout instead of writing to file.
-  - `--src-ip` : Source IP address option. Use an explicit IP address as source.
-  - `--exclude TARGETS`  : List of targets to be excluded from the scan, even if they are part of the overall target list.
-  - `--excludefile FILE` : The same functionality as the `--exclude` option, except that the excluded targets are provided in a `FILE` rather than on the command line.  
-    `FILE` format: Targets in the file can be separated by a space, tab, or newline.
-    Comments: You can add comments by starting a line with a # symbol. Everything will be ignored after the `#` on that line.
-- **TODO :**
-  -  `-iL INPUTFILE` (Input from list). Reads targets `INPUTFILE`.  
-     Specify `-` as `INPUTFILE` to read hosts from standard input rather than an actual file.
-  -  Extended Target Syntax: The extended target syntax should include: IP addresses, hostnames, CIDR netblocks and octet ranges.  
-     The Extended Target Syntax should apply to both the `-t`, `--exclude TARGETS` and the `--excludefile FILE` options.
+--------------------------------------------------------------------------------
+**/Enhancements**
+
+- `-q` : Quiet option. Suppresses banner and progress.
+- `-o -` : Write JSONL format to stdout instead of writing to file.  
+   **TIP:** Combining `-q` and `-o -` may be useful for scripting. 
+- `--src-ip` : Source IP address option. Use an explicit IP address as source.
+- `--exclude TARGETS`  : List of targets to be excluded from the scan, even if they are part of the overall target list.
+- `--excludefile FILE` : The same functionality as the `--exclude` option, except that the excluded targets are provided in a `FILE` rather than on the command line.  
+  `FILE` format: Targets in the file can be separated by a space, tab, or newline.
+  Comments: You can add comments by starting a line with a # symbol. Everything will be ignored after the `#` on that line.
+- **Extended Target Syntax**: All target-list options (`-t`, `-tf`, `--exclude`, `--excludefile`) support: IP addresses, CIDR blocks, octet-ranges (e.g. `192.0.2.1-3`), and hostnames.
+
+**/End-Of-Enhancements**
+
+--------------------------------------------------------------------------------
 
 ![Alt text](screenshots/udpx_logo.png)
 # 
@@ -83,9 +86,9 @@ Usage of ./udpx:
   -c int
     	Maximum number of concurrent connections (default 32)
   --exclude string
-    	Comma-separated list of targets (IPs/CIDRs) to exclude from the scan
+    	Comma-separated list of targets (IPs/hostnames/CIDRs/octet-ranges) to exclude from the scan
   --excludefile string
-    	Path to a file with targets (IPs/CIDRs) to exclude, separated by newlines, spaces, or tabs; '#' starts an end-of-line comment
+    	Path to a file with targets (IPs/hostnames/CIDRs/octet-ranges) to exclude, separated by newlines, spaces, or tabs; '#' starts an end-of-line comment
   -nr
     	Do not randomize addresses
   -o string
@@ -99,9 +102,9 @@ Usage of ./udpx:
   --src-ip string
     	Source IP to bind probes to (must be assigned to a local interface; overrides the kernel's default route-table pick)
   -t string
-    	IP/CIDR to scan
+    	IPs/hostnames/CIDRs/octet-ranges to scan
   -tf string
-    	File containing IPs/CIDRs to scan
+    	File containing IPs/hostnames/CIDRs/octet-ranges to scan
   -w int
     	Maximum time to wait for a response (socket timeout) in ms (default 500)
 ```

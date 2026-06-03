@@ -26,8 +26,8 @@ type Options struct {
 
 func ParseOptions() *Options {
 	opts := &Options{}
-	flag.StringVar(&opts.Arg_t, "t", "", "IP/CIDR to scan")
-	flag.StringVar(&opts.Arg_tf, "tf", "", "File containing IPs/CIDRs to scan")
+	flag.StringVar(&opts.Arg_t, "t", "", "IPs/hostnames/CIDRs/octet-ranges to scan")
+	flag.StringVar(&opts.Arg_tf, "tf", "", "File containing IPs/hostnames/CIDRs/octet-ranges to scan")
 	flag.StringVar(&opts.Arg_o, "o", "", "Output file to write results")
 	flag.StringVar(&opts.Arg_s, "s", "", fmt.Sprintf("Scan only for a specific service, one of: %s", probes.GetProbeNames()))
 	flag.IntVar(&opts.Arg_c, "c", 32, "Maximum number of concurrent connections")
@@ -36,8 +36,8 @@ func ParseOptions() *Options {
 	flag.BoolVar(&opts.Arg_sp, "sp", false, "Show received packets (only first 32 bytes)")
 	flag.BoolVar(&opts.Arg_q, "q", false, "Quiet mode: suppress banner and progress log lines (results still emitted)")
 	flag.StringVar(&opts.Arg_src_ip, "src-ip", "", "Source IP to bind probes to (must be assigned to a local interface; overrides the kernel's default route-table pick)")
-	flag.StringVar(&opts.Arg_exclude, "exclude", "", "Comma-separated list of targets (IPs/CIDRs) to exclude from the scan")
-	flag.StringVar(&opts.Arg_excludefile, "excludefile", "", "Path to a file with targets (IPs/CIDRs) to exclude, separated by newlines, spaces, or tabs; '#' starts an end-of-line comment")
+	flag.StringVar(&opts.Arg_exclude, "exclude", "", "Comma-separated list of targets (IPs/hostnames/CIDRs/octet-ranges) to exclude from the scan")
+	flag.StringVar(&opts.Arg_excludefile, "excludefile", "", "Path to a file with targets (IPs/hostnames/CIDRs/octet-ranges) to exclude, separated by newlines, spaces, or tabs; '#' starts an end-of-line comment")
 
 	// Custom usage: long flags (name length > 2) are shown with a leading '--',
 	// short flags keep '-'. Both prefixes are accepted at parse time — this is

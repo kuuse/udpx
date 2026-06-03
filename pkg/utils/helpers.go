@@ -6,6 +6,8 @@ import (
 	"net"
 	"os"
 	"strings"
+
+	"github.com/nullt3r/udpx/pkg/targets"
 )
 
 func EscapeByteArray(message []byte) []byte {
@@ -127,16 +129,16 @@ func ValidateLocalIP(s string) (net.IP, error) {
 	return nil, fmt.Errorf("IP %s is not assigned to any local interface", ip)
 }
 
-// BuildExcludeSet expands `list` (a comma-separated string of IPs and/or
-// CIDRs from -exclude, possibly empty) and `file` (a path to a file from
-// -excludefile, possibly empty) into a set of IP strings to remove from
-// the scan set.
+// BuildExcludeSet expands exclude targets (IPs, CIDRs, octet-ranges, hostnames)
+// from both a comma-separated list (`list`) and a file (`file`) into a set of
+// IP strings to remove from the scan set. Uses the Extended Target Syntax
+// (pkg/targets.Parse) so both --exclude and --excludefile support the same
+// target formats.
 //
 // File format: targets are separated by newlines, spaces, or tabs.
 // A '#' marks an end-of-line comment — everything from '#' to
 // end-of-line is ignored on each line.
 //
-// Reuses IpsFromCidr so CIDR expansion is identical to -t handling.
 // Malformed entries fail fast with a clear error (consistent with -src-ip).
 func BuildExcludeSet(list, file string) (map[string]struct{}, error) {
 	out := make(map[string]struct{})
@@ -146,20 +148,13 @@ func BuildExcludeSet(list, file string) (map[string]struct{}, error) {
 		if entry == "" {
 			return nil
 		}
-		if strings.Contains(entry, "/") {
-			ips, err := IpsFromCidr(entry)
-			if err != nil {
-				return fmt.Errorf("exclude: invalid CIDR %q: %w", entry, err)
-			}
-			for _, ip := range ips {
-				out[ip] = struct{}{}
-			}
-			return nil
+		ips, err := targets.Parse(entry)
+		if err != nil {
+			return fmt.Errorf("exclude: %w", err)
 		}
-		if net.ParseIP(entry) == nil {
-			return fmt.Errorf("exclude: not a valid IP or CIDR: %q", entry)
+		for _, ip := range ips {
+			out[ip] = struct{}{}
 		}
-		out[entry] = struct{}{}
 		return nil
 	}
 
