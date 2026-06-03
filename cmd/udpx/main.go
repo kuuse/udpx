@@ -95,6 +95,27 @@ func main() {
 	toscan = utils.Deduplicate(toscan)
 	toscan_count := len(toscan)
 
+	// Apply -exclude / -excludefile BEFORE shuffle and BEFORE any probes are
+	// sent. Excluded targets must never receive a single packet.
+	if len(opts.Arg_exclude) != 0 || len(opts.Arg_excludefile) != 0 {
+		excl, err := utils.BuildExcludeSet(opts.Arg_exclude, opts.Arg_excludefile)
+		if err != nil {
+			log.Fatalf("%s[!]%s %s", colors.SetColor().Red, colors.SetColor().Reset, err)
+		}
+		filtered := toscan[:0]
+		removed := 0
+		for _, ip := range toscan {
+			if _, skip := excl[ip]; skip {
+				removed++
+				continue
+			}
+			filtered = append(filtered, ip)
+		}
+		toscan = filtered
+		toscan_count = len(toscan)
+		log.Printf("[+] Excluded %d target(s) via -exclude/-excludefile", removed)
+	}
+
 	// Resolve and validate -src-ip, if given. Fail fast with a clear message
 	// rather than letting every probe blow up with "cannot assign requested
 	// address" at dial time.

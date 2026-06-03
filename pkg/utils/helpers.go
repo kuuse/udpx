@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strings"
 )
 
 func EscapeByteArray(message []byte) []byte {
@@ -124,4 +125,76 @@ func ValidateLocalIP(s string) (net.IP, error) {
 		}
 	}
 	return nil, fmt.Errorf("IP %s is not assigned to any local interface", ip)
+}
+
+// BuildExcludeSet expands `list` (a comma-separated string of IPs and/or
+// CIDRs from -exclude, possibly empty) and `file` (a path to a file from
+// -excludefile, possibly empty) into a set of IP strings to remove from
+// the scan set.
+//
+// File format: targets are separated by newlines, spaces, or tabs.
+// A '#' marks an end-of-line comment — everything from '#' to
+// end-of-line is ignored on each line.
+//
+// Reuses IpsFromCidr so CIDR expansion is identical to -t handling.
+// Malformed entries fail fast with a clear error (consistent with -src-ip).
+func BuildExcludeSet(list, file string) (map[string]struct{}, error) {
+	out := make(map[string]struct{})
+
+	add := func(entry string) error {
+		entry = strings.TrimSpace(entry)
+		if entry == "" {
+			return nil
+		}
+		if strings.Contains(entry, "/") {
+			ips, err := IpsFromCidr(entry)
+			if err != nil {
+				return fmt.Errorf("exclude: invalid CIDR %q: %w", entry, err)
+			}
+			for _, ip := range ips {
+				out[ip] = struct{}{}
+			}
+			return nil
+		}
+		if net.ParseIP(entry) == nil {
+			return fmt.Errorf("exclude: not a valid IP or CIDR: %q", entry)
+		}
+		out[entry] = struct{}{}
+		return nil
+	}
+
+	if list != "" {
+		for _, e := range strings.Split(list, ",") {
+			if err := add(e); err != nil {
+				return nil, err
+			}
+		}
+	}
+	if file != "" {
+		data, err := os.ReadFile(file)
+		if err != nil {
+			return nil, fmt.Errorf("excludefile: %w", err)
+		}
+		// Per-line: strip '#'-to-EOL comments first, then split the
+		// remaining content on spaces/tabs/newlines. Doing the comment
+		// strip line-by-line (rather than treating '#' as a token-prefix
+		// marker) is necessary so an inline comment after a target on the
+		// same line works: "192.0.2.1   # skip the gateway".
+		var b strings.Builder
+		for _, line := range strings.Split(string(data), "\n") {
+			if i := strings.IndexByte(line, '#'); i >= 0 {
+				line = line[:i]
+			}
+			b.WriteString(line)
+			b.WriteByte('\n')
+		}
+		for _, e := range strings.FieldsFunc(b.String(), func(r rune) bool {
+			return r == '\n' || r == '\r' || r == ' ' || r == '\t'
+		}) {
+			if err := add(e); err != nil {
+				return nil, err
+			}
+		}
+	}
+	return out, nil
 }
