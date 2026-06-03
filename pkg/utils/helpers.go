@@ -96,3 +96,32 @@ func Deduplicate(stringSlice []string) []string {
 	}
 	return list
 }
+
+// ValidateLocalIP parses s as an IP and verifies it is currently assigned to
+// some local network interface. Returns the parsed net.IP on success.
+//
+// Used to back the -src-ip flag: failing fast here gives a clear error
+// instead of a per-probe "bind: cannot assign requested address" later.
+func ValidateLocalIP(s string) (net.IP, error) {
+	ip := net.ParseIP(s)
+	if ip == nil {
+		return nil, fmt.Errorf("not a valid IP address: %q", s)
+	}
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return nil, fmt.Errorf("enumerating local interface addresses: %w", err)
+	}
+	for _, a := range addrs {
+		var local net.IP
+		switch v := a.(type) {
+		case *net.IPNet:
+			local = v.IP
+		case *net.IPAddr:
+			local = v.IP
+		}
+		if local != nil && local.Equal(ip) {
+			return ip, nil
+		}
+	}
+	return nil, fmt.Errorf("IP %s is not assigned to any local interface", ip)
+}

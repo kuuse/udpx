@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"math/rand"
+	"net"
 	"os"
 	"strings"
 	"sync"
@@ -94,6 +95,19 @@ func main() {
 	toscan = utils.Deduplicate(toscan)
 	toscan_count := len(toscan)
 
+	// Resolve and validate -src-ip, if given. Fail fast with a clear message
+	// rather than letting every probe blow up with "cannot assign requested
+	// address" at dial time.
+	var srcIP net.IP
+	if len(opts.Arg_src_ip) != 0 {
+		ip, err := utils.ValidateLocalIP(opts.Arg_src_ip)
+		if err != nil {
+			log.Fatalf("%s[!]%s -src-ip: %s", colors.SetColor().Red, colors.SetColor().Reset, err)
+		}
+		srcIP = ip
+		log.Printf("[+] Binding probes to source IP %s", srcIP)
+	}
+
 	if !opts.Arg_nr {
 		rand.Seed(time.Now().UnixNano())
 		rand.Shuffle(toscan_count, func(i, j int) { toscan[i], toscan[j] = toscan[j], toscan[i] })
@@ -115,7 +129,7 @@ func main() {
 			guard <- struct{}{}
 			go func(t string) {
 				defer wg.Done()
-				scanner := scan.Scanner{Target: t, Probes: probes.Probes, Arg_st: opts.Arg_st, Arg_sp: opts.Arg_sp, Channel: comm}
+				scanner := scan.Scanner{Target: t, Probes: probes.Probes, Arg_st: opts.Arg_st, Arg_sp: opts.Arg_sp, SrcIP: srcIP, Channel: comm}
 				scanner.Run()
 				<-guard
 			}(t)
