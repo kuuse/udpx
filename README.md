@@ -7,8 +7,10 @@ Small improvements to `udpx`, with a few added options:
 - **DONE :** 
   - `-q` : Quiet option. Suppresses banner and progress.
   - `-o -` : Write JSONL format to stdout instead of writing to file.
+  - `--src-ip` : Source IP address option. Use an explicit IP address as source.
 - **TODO :**
-  - `--src-ip` : Source/spoof IP address option. Use an alternative IP address as source.
+  - `--exclude TARGETS`  : List of targets to be excluded from the scan, even if they are part of the overall target list.
+  - `--excludefile FILE` : The same functionality as the `--exclude` option, except that the excluded targets are provided in a newline-, space-, or tab-delimited `FILE` rather than on the command line.
 
 ![Alt text](screenshots/udpx_logo.png)
 # 
