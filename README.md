@@ -7,6 +7,7 @@ Small enhancements to `udpx`:
 --------------------------------------------------------------------------------
 **/Enhancements**
 
+- `-v | --version` : Print version and exit.
 - `-q` : Quiet option. Suppresses banner and progress.
 - `-o -` : Write JSONL format to stdout instead of writing to file.  
    **TIP:** Combining `-q` and `-o -` may be useful for scripting. 
@@ -15,7 +16,8 @@ Small enhancements to `udpx`:
 - `--excludefile FILE` : The same functionality as the `--exclude` option, except that the excluded targets are provided in a `FILE` rather than on the command line.  
   `FILE` format: Targets in the file can be separated by a space, tab, or newline.
   Comments: You can add comments by starting a line with a # symbol. Everything will be ignored after the `#` on that line.
-- **Extended Target Syntax**: All target-list options (`-t`, `-tf`, `--exclude`, `--excludefile`) support: IP addresses, CIDR blocks, octet-ranges (e.g. `192.0.2.1-3`), and hostnames. The `-t` option accepts a list of one ore more *space*-separated targets. The `--exclude` option accepts a list of one ore more *comma*-separated targets.  
+- **Extended Target Syntax**: All target-list options (`-t`, `-tf`, `--exclude`, `--excludefile`) support: IP addresses, CIDR blocks, octet-ranges (e.g. `192.0.2.1-3`), and hostnames. The `-t` option accepts a list of one or more *space*-separated targets or positional arguments. The `--exclude` option accepts a list of one or more *comma*-separated targets.
+- **Nmap-style positional arguments**: Targets can be specified as positional arguments (like nmap): `udpx -q -o - 192.168.1.1 192.168.2.0/24`
 
 **/End-Of-Enhancements**
 
@@ -80,33 +82,45 @@ If you want to store the results, use flag `-o [filename]`. Output is in JSONL f
       / / / / / / / /_/ /   /
      / /_/ / /_/ / ____/   |
      \____/_____/_/   /_/|_|
-         v1.0.7, by @nullt3r
+         udpx v1.0.8, by @nullt3r
 
 Usage of ./udpx:
-  -c int
+  ./udpx [options] [targets...]
+
+Options:
+  -c num
     	Maximum number of concurrent connections (default 32)
-  --exclude string
-    	Comma-separated list of targets (IPs/hostnames/CIDRs/octet-ranges) to exclude from the scan
-  --excludefile string
-    	Path to a file with targets (IPs/hostnames/CIDRs/octet-ranges) to exclude, separated by newlines, spaces, or tabs; '#' starts an end-of-line comment
+  --exclude host1[,host2[,...]]
+    	Comma-separated list of targets to exclude from the scan (IPs/hostnames/CIDRs/octet-ranges)
+  --excludefile filename
+    	Path to a file with targets to exclude, separated by newlines, spaces, or tabs; '#' starts an end-of-line comment
   -nr
     	Do not randomize addresses
-  -o string
+  -o filename
     	Output file to write results
   -q
     	Quiet mode: suppress banner and progress log lines (results still emitted)
-  -s string
+  -s service
     	Scan only for a specific service, one of: ard, bacnet, chargen, citrix, coap, db, digi, dns, ipmi, ldap, mdns, memcache, mssql, nat, netbios, netis, ntp, openvpn, pca, portmap, qotd, rdp, ripv, sentinel, sip, snmp, ssdp, tftp, ubiquiti, upnp, valve, wdbrpc, wsd, xdmcp, kerberos, ike, radius, dtls
   -sp
     	Show received packets (only first 32 bytes)
-  --src-ip string
+  --src-ip ip-address
     	Source IP to bind probes to (must be assigned to a local interface; overrides the kernel's default route-table pick)
-  -t string
-    	IPs/hostnames/CIDRs/octet-ranges to scan
-  -tf string
+  -t host1[ host2[ ...]]
+    	IPs/hostnames/CIDRs/octet-ranges to scan (nmap target specification syntax)
+  -tf filename
     	File containing IPs/hostnames/CIDRs/octet-ranges to scan
-  -w int
+  -v | --version
+    	Print version and exit
+  -w ms
     	Maximum time to wait for a response (socket timeout) in ms (default 500)
+
+Targets:
+  Targets can be specified as positional arguments (like nmap) OR via -t/-tf flags.
+  Examples:
+    ./udpx 192.168.1.1 192.168.2.0/24
+    ./udpx -t 192.168.1.1 192.168.2.0/24
+    ./udpx -tf targets.txt
 ```
 
 ## Building

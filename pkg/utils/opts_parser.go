@@ -66,7 +66,32 @@ func ParseOptions() *Options {
 		fmt.Fprintf(out, "Usage of %s:\n", os.Args[0])
 		fmt.Fprintf(out, "  %s [options] [targets...]\n\n", os.Args[0])
 		fmt.Fprintf(out, "Options:\n")
+		
+		// Track which flags we've already printed (for aliases)
+		printed := make(map[string]bool)
+		
 		flag.VisitAll(func(f *flag.Flag) {
+			// Skip if we already printed this flag (e.g., both -v and -version)
+			if printed[f.Name] {
+				return
+			}
+			
+			// Special handling for -v and -version aliases
+			if f.Name == "version" {
+				printed["v"] = true
+				printed["version"] = true
+				fmt.Fprintf(out, "  -v | --version\n")
+				_, usage := flag.UnquoteUsage(f)
+				desc := strings.ReplaceAll(usage, "\n", "\n    \t")
+				fmt.Fprintf(out, "    \t%s\n", desc)
+				return
+			}
+			if f.Name == "v" {
+				return // Skip, already handled with version
+			}
+			
+			printed[f.Name] = true
+			
 			prefix := "-"
 			if len(f.Name) > 2 {
 				prefix = "--"
