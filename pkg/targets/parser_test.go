@@ -55,6 +55,64 @@ func TestParse(t *testing.T) {
 	}
 }
 
+func TestParseMultiple(t *testing.T) {
+	tests := []struct {
+		name      string
+		targets   string
+		wantCount int
+		wantErr   bool
+		wantIPs   []string
+	}{
+		// Single targets
+		{"single CIDR", "192.0.2.0/30", 4, false, []string{"192.0.2.0", "192.0.2.1", "192.0.2.2", "192.0.2.3"}},
+		{"single IP", "192.0.2.1", 1, false, []string{"192.0.2.1"}},
+
+		// Space-separated multiple IPs
+		{"multiple IPs with spaces", "192.0.2.1 192.0.2.2 192.0.2.3", 3, false, []string{"192.0.2.1", "192.0.2.2", "192.0.2.3"}},
+
+		// Mixed syntax
+		{"mixed: IP and CIDR", "192.0.2.1 192.0.3.0/30", 5, false, []string{"192.0.2.1", "192.0.3.0", "192.0.3.1", "192.0.3.2", "192.0.3.3"}},
+		{"mixed: IP, CIDR, and octet range", "192.0.2.1 192.0.3.0/31 10.0.0.1-3", 6, false, []string{"192.0.2.1", "192.0.3.0", "192.0.3.1", "10.0.0.1", "10.0.0.2", "10.0.0.3"}},
+
+		// Whitespace handling
+		{"multiple spaces", "192.0.2.1  192.0.2.2   192.0.2.3", 3, false, []string{"192.0.2.1", "192.0.2.2", "192.0.2.3"}},
+		{"tabs and spaces", "192.0.2.1\t192.0.2.2  192.0.2.3", 3, false, []string{"192.0.2.1", "192.0.2.2", "192.0.2.3"}},
+		{"leading/trailing whitespace", "  192.0.2.1 192.0.2.2  ", 2, false, []string{"192.0.2.1", "192.0.2.2"}},
+
+		// Edge cases
+		{"empty", "", 0, false, nil},
+		{"whitespace only", "  \t  ", 0, false, nil},
+
+		// Errors - invalid target in list
+		{"invalid target in list", "192.0.2.1 invalid-target-xyz 192.0.2.3", 0, true, nil},
+		{"invalid CIDR in list", "192.0.2.1 192.0.2.0/33 192.0.2.3", 0, true, nil},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ParseMultiple(tt.targets)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ParseMultiple(%q) error = %v, wantErr %v", tt.targets, err, tt.wantErr)
+				return
+			}
+			if err != nil {
+				return
+			}
+			if len(got) != tt.wantCount {
+				t.Errorf("ParseMultiple(%q) count = %d, want %d", tt.targets, len(got), tt.wantCount)
+				return
+			}
+			if tt.wantIPs != nil {
+				for i, want := range tt.wantIPs {
+					if i >= len(got) || got[i] != want {
+						t.Errorf("ParseMultiple(%q)[%d] = %q, want %q", tt.targets, i, got[i], want)
+					}
+				}
+			}
+		})
+	}
+}
+
 // BenchmarkParseOctetRange measures the cost of expanding multi-octet ranges.
 func BenchmarkParseOctetRange(b *testing.B) {
 	for i := 0; i < b.N; i++ {

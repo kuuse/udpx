@@ -9,6 +9,7 @@ import (
 	"math/rand"
 	"net"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -17,12 +18,19 @@ import (
 	"github.com/nullt3r/udpx/pkg/scan"
 	"github.com/nullt3r/udpx/pkg/targets"
 	"github.com/nullt3r/udpx/pkg/utils"
+	"github.com/nullt3r/udpx/pkg/version"
 )
 
 func main() {
 	// Parse options FIRST so -q / -o '-' can influence where the banner goes
 	// (or whether it's printed at all).
 	opts := utils.ParseOptions()
+
+	// Handle -v/--version flag
+	if opts.Arg_version {
+		fmt.Println(version.VersionLong())
+		os.Exit(0)
+	}
 
 	// Output channels:
 	//   - stdoutJsonl == true  => "-o -" mode: stdout is reserved for JSONL records,
@@ -45,31 +53,44 @@ func main() {
       / / / / / / / /_/ /   / 
      / /_/ / /_/ / ____/   |  
      \____/_____/_/   /_/|_|  
-         v1.0.7, by @nullt3r
+         %s
 
-%s`, colors.SetColor().Cyan, colors.SetColor().Reset)
+%s`, colors.SetColor().Cyan, version.VersionLong(), colors.SetColor().Reset)
 
-	var targetList []string
 	var toscan []string
 
-	if len(opts.Arg_t) == 0 && len(opts.Arg_tf) == 0 {
-		log.Fatalf("%s[!]%s Error, argument -t or -tf is required\n", colors.SetColor().Red, colors.SetColor().Reset)
+	if len(opts.Arg_t) == 0 && len(opts.Arg_tf) == 0 && len(opts.PositionalArgs) == 0 {
+		log.Fatalf("%s[!]%s Error, targets required via positional arguments, -t, or -tf\n", colors.SetColor().Red, colors.SetColor().Reset)
 	}
 
 	if len(opts.Arg_tf) != 0 {
-		val, err := utils.ReadFile(opts.Arg_tf)
+		targetList, err := utils.ReadFile(opts.Arg_tf)
 		if err != nil {
 			log.Fatalf("%s[!]%s Error while loading targets from file: %s", colors.SetColor().Red, colors.SetColor().Reset, err)
 		}
-		targetList = val
-	} else if len(opts.Arg_t) != 0 {
-		targetList = []string{opts.Arg_t}
-	}
+		for _, target := range targetList {
+			ips, err := targets.Parse(target)
+			if err != nil {
+				log.Fatalf("%s[!]%s Error parsing target %q: %s", colors.SetColor().Red, colors.SetColor().Reset, target, err)
+			}
+			toscan = append(toscan, ips...)
+		}
+	} else if len(opts.Arg_t) != 0 || len(opts.PositionalArgs) > 0 {
+		// Combine -t flag value with any positional arguments
+		// This handles cases like: -t 192.168.0.1 192.168.0.2 (both get combined)
+		var targetStr string
+		if len(opts.Arg_t) > 0 {
+			targetStr = opts.Arg_t
+			if len(opts.PositionalArgs) > 0 {
+				targetStr += " " + strings.Join(opts.PositionalArgs, " ")
+			}
+		} else {
+			targetStr = strings.Join(opts.PositionalArgs, " ")
+		}
 
-	for _, target := range targetList {
-		ips, err := targets.Parse(target)
+		ips, err := targets.ParseMultiple(targetStr)
 		if err != nil {
-			log.Fatalf("%s[!]%s Error parsing target %q: %s", colors.SetColor().Red, colors.SetColor().Reset, target, err)
+			log.Fatalf("%s[!]%s Error parsing targets %q: %s", colors.SetColor().Red, colors.SetColor().Reset, targetStr, err)
 		}
 		toscan = append(toscan, ips...)
 	}

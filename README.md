@@ -1,6 +1,6 @@
 # NOTE: This is an `udpx` fork
 
-[Goto the original `udpx` repository](https://github.com/nullt3r/udpx)
+[Go to the original `udpx` repository](https://github.com/nullt3r/udpx)
 
 Small enhancements to `udpx`:
 
@@ -11,11 +11,11 @@ Small enhancements to `udpx`:
 - `-o -` : Write JSONL format to stdout instead of writing to file.  
    **TIP:** Combining `-q` and `-o -` may be useful for scripting. 
 - `--src-ip` : Source IP address option. Use an explicit IP address as source.
-- `--exclude TARGETS`  : List of targets to be excluded from the scan, even if they are part of the overall target list.
+- `--exclude TARGETS`  : List of comma-separated targets to be excluded from the scan, even if they are part of the overall target list.
 - `--excludefile FILE` : The same functionality as the `--exclude` option, except that the excluded targets are provided in a `FILE` rather than on the command line.  
   `FILE` format: Targets in the file can be separated by a space, tab, or newline.
   Comments: You can add comments by starting a line with a # symbol. Everything will be ignored after the `#` on that line.
-- **Extended Target Syntax**: All target-list options (`-t`, `-tf`, `--exclude`, `--excludefile`) support: IP addresses, CIDR blocks, octet-ranges (e.g. `192.0.2.1-3`), and hostnames.
+- **Extended Target Syntax**: All target-list options (`-t`, `-tf`, `--exclude`, `--excludefile`) support: IP addresses, CIDR blocks, octet-ranges (e.g. `192.0.2.1-3`), and hostnames. The `-t` option accepts a list of one ore more *space*-separated targets. The `--exclude` option accepts a list of one ore more *comma*-separated targets.  
 
 **/End-Of-Enhancements**
 

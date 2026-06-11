@@ -6,6 +6,40 @@ import (
 	"strings"
 )
 
+// ParseMultiple expands a space-separated list of targets into a combined list
+// of IP strings. Each target follows the same syntax as Parse():
+//   - IP addresses: "192.0.2.1"
+//   - CIDR blocks: "192.0.2.0/24"
+//   - Octet ranges: "192.0.2.1-3" (expands to .1, .2, .3)
+//   - Hostnames: "example.com" (resolved via net.LookupIP)
+//
+// Whitespace (spaces, tabs) separates individual targets. Multiple consecutive
+// whitespace characters are treated as a single separator. Returns aggregated
+// list of all IPs from all targets, or first error encountered.
+func ParseMultiple(targetString string) ([]string, error) {
+	targetString = strings.TrimSpace(targetString)
+	if targetString == "" {
+		return nil, nil
+	}
+
+	// Split by whitespace, filtering empty entries
+	targets := strings.Fields(targetString) // Fields splits on any whitespace and removes empty strings
+	if len(targets) == 0 {
+		return nil, nil
+	}
+
+	var result []string
+	for _, target := range targets {
+		ips, err := Parse(target)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, ips...)
+	}
+
+	return result, nil
+}
+
 // Parse expands a single target (IP, CIDR, octet range, or hostname) into a
 // list of IP strings. Extended Target Syntax supports:
 //   - IP addresses: "192.0.2.1"
