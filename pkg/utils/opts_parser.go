@@ -33,7 +33,7 @@ func ParseOptions() *Options {
 	flag.StringVar(&opts.Arg_t, "t", "", "IPs/hostnames/CIDRs/octet-ranges to scan (nmap target specification syntax)")
 	flag.StringVar(&opts.Arg_tf, "tf", "", "File containing IPs/hostnames/CIDRs/octet-ranges to scan")
 	flag.StringVar(&opts.Arg_o, "o", "", "Output file to write results")
-	flag.StringVar(&opts.Arg_s, "s", "", fmt.Sprintf("Scan only for a specific service, one of: %s", probes.GetProbeNames()))
+	flag.StringVar(&opts.Arg_s, "s", "", fmt.Sprintf("Comma-separated list of services to scan, e.g. dns,ntp,snmp (available: %s)", probes.GetProbeNames()))
 	flag.IntVar(&opts.Arg_c, "c", 32, "Maximum number of concurrent connections")
 	flag.BoolVar(&opts.Arg_nr, "nr", false, "Do not randomize addresses")
 	flag.IntVar(&opts.Arg_st, "w", 500, "Maximum time to wait for a response (socket timeout) in ms")
@@ -109,7 +109,7 @@ func ParseOptions() *Options {
 			case "o":
 				argName = "filename"
 			case "s":
-				argName = "service"
+				argName = "service1[,service2[,...]]"
 			case "c":
 				argName = "num"
 			case "w":

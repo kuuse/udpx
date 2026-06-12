@@ -105,16 +105,44 @@ func main() {
 	}
 
 	if len(opts.Arg_s) != 0 {
-		for n, probe := range probes.Probes {
-			if probe.Name == opts.Arg_s {
-				probes.Probes = []probes.Probe{probe}
-				break
-			}
-			if n == len(probes.Probes)-1 {
-				log.Fatalf("%s[!]%s Service '%s' is not supported", colors.SetColor().Red, colors.SetColor().Reset, opts.Arg_s)
+		// Split comma-separated services
+		requestedServices := strings.Split(opts.Arg_s, ",")
+		
+		// Trim whitespace from each service name
+		for i := range requestedServices {
+			requestedServices[i] = strings.TrimSpace(requestedServices[i])
+		}
+		
+		// Build a map of available probe names for quick lookup
+		availableProbes := make(map[string]probes.Probe)
+		for _, probe := range probes.Probes {
+			availableProbes[probe.Name] = probe
+		}
+		
+		// Validate all requested services and build selected probes
+		var selectedProbes []probes.Probe
+		var notFound []string
+		
+		for _, service := range requestedServices {
+			if probe, exists := availableProbes[service]; exists {
+				selectedProbes = append(selectedProbes, probe)
+			} else {
+				notFound = append(notFound, service)
 			}
 		}
+		
+		// If any services were not found, fail with error
+		if len(notFound) > 0 {
+			log.Fatalf("%s[!]%s Service(s) not supported: %s\n     Available services: %s", 
+				colors.SetColor().Red, colors.SetColor().Reset, 
+				strings.Join(notFound, ", "), 
+				probes.GetProbeNames())
+		}
+		
+		// Replace global Probes with selected probes
+		probes.Probes = selectedProbes
 	}
+
 
 	toscan = utils.Deduplicate(toscan)
 	toscan_count := len(toscan)

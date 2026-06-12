@@ -12,6 +12,7 @@ Small enhancements to `udpx`:
 - `-o -` : Write JSONL format to stdout instead of writing to file.  
    **TIP:** Combining `-q` and `-o -` may be useful for scripting. 
 - `-b bufsize` : Response buffer size in bytes (recommended 512 for complete response_data extraction, default 32). Valid range: 32-4096 bytes.
+- `-s service1[,service2[,...]]` : Scan for one or more services (comma-separated). Example: `-s "dns,ntp,mdns"`. Default: scans all services.
 - `--src-ip` : Source IP address option. Use an explicit IP address as source.
 - `--exclude TARGETS`  : List of comma-separated targets to be excluded from the scan, even if they are part of the overall target list.
 - `--excludefile FILE` : The same functionality as the `--exclude` option, except that the excluded targets are provided in a `FILE` rather than on the command line.  
@@ -62,6 +63,11 @@ To scan targets from file with maximum of 128 connections for only specific serv
 udpx -tf targets.txt -c 128 -s ipmi
 ```
 
+To scan with multiple services (DNS, NTP, mDNS) and increased buffer size:
+```
+udpx -t 1.2.3.4/24 -c 128 -s "dns,ntp,mdns" -b 512
+```
+
 Target can be:
 * IP address
 * CIDR
@@ -103,8 +109,8 @@ Options:
     	Output file to write results
   -q
     	Quiet mode: suppress banner and progress log lines (results still emitted)
-  -s service
-    	Scan only for a specific service, one of: ard, bacnet, chargen, citrix, coap, db, digi, dns, ipmi, ldap, mdns, memcache, mssql, nat, netbios, netis, ntp, openvpn, pca, portmap, qotd, rdp, ripv, sentinel, sip, snmp, ssdp, tftp, ubiquiti, upnp, valve, wdbrpc, wsd, xdmcp, kerberos, ike, radius, dtls
+  -s service1[,service2[,...]]
+    	Comma-separated list of services to scan, e.g. dns,ntp,snmp (available: ard, bacnet, chargen, citrix, coap, db, digi, dns, ipmi, ldap, mdns, memcache, mssql, nat, netbios, netis, ntp, openvpn, pca, portmap, qotd, rdp, ripv, sentinel, sip, snmp, ssdp, tftp, ubiquiti, upnp, valve, wdbrpc, wsd, xdmcp, kerberos, ike, radius, dtls)
   -sp
     	Show received packets (only first 32 bytes)
   --src-ip ip-address
