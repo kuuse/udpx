@@ -24,6 +24,7 @@ type Options struct {
 	Arg_src_ip      string
 	Arg_exclude     string
 	Arg_excludefile string
+	Arg_b           int   // Response buffer size (default 32)
 	PositionalArgs  []string  // Positional arguments (targets) after all flags
 }
 
@@ -37,6 +38,7 @@ func ParseOptions() *Options {
 	flag.BoolVar(&opts.Arg_nr, "nr", false, "Do not randomize addresses")
 	flag.IntVar(&opts.Arg_st, "w", 500, "Maximum time to wait for a response (socket timeout) in ms")
 	flag.BoolVar(&opts.Arg_sp, "sp", false, "Show received packets (only first 32 bytes)")
+	flag.IntVar(&opts.Arg_b, "b", 32, "Response buffer size in bytes")
 	flag.BoolVar(&opts.Arg_q, "q", false, "Quiet mode: suppress banner and progress log lines (results still emitted)")
 	// Version flag: register both -v and -version as aliases pointing to the same variable
 	flag.BoolVar(&opts.Arg_version, "v", false, "Print version and exit")
@@ -112,6 +114,8 @@ func ParseOptions() *Options {
 				argName = "num"
 			case "w":
 				argName = "ms"
+			case "b":
+				argName = "bufsize"
 			case "src-ip":
 				argName = "ip-address"
 			case "exclude":
@@ -131,9 +135,13 @@ func ParseOptions() *Options {
 			
 			_, usage := flag.UnquoteUsage(f)
 			desc := strings.ReplaceAll(usage, "\n", "\n    \t")
-			// Append "(default ...)" for non-zero defaults, mirroring Go's
-			// stdlib PrintDefaults. Strings are quoted, everything else bare.
-			if !isZeroValue(f, f.DefValue) {
+			
+			// Special handling for -b flag to add recommendation text
+			if f.Name == "b" {
+				desc += " (recommended 512 for complete response_data, default " + f.DefValue + ")"
+			} else if !isZeroValue(f, f.DefValue) {
+				// Append "(default ...)" for non-zero defaults, mirroring Go's
+				// stdlib PrintDefaults. Strings are quoted, everything else bare.
 				if g, ok := f.Value.(flag.Getter); ok {
 					if _, isStr := g.Get().(string); isStr {
 						desc += fmt.Sprintf(" (default %q)", f.DefValue)

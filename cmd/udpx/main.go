@@ -26,6 +26,15 @@ func main() {
 	// (or whether it's printed at all).
 	opts := utils.ParseOptions()
 
+	// Validate buffer size
+	const MaxBufferSize = 4096
+	if opts.Arg_b < 32 {
+		log.Fatalf("%s[!]%s Buffer size must be at least 32 bytes (got %d)", colors.SetColor().Red, colors.SetColor().Reset, opts.Arg_b)
+	}
+	if opts.Arg_b > MaxBufferSize {
+		log.Fatalf("%s[!]%s Buffer size cannot exceed %d bytes (got %d)", colors.SetColor().Red, colors.SetColor().Reset, MaxBufferSize, opts.Arg_b)
+	}
+
 	// Handle -v/--version flag
 	if opts.Arg_version {
 		fmt.Println(version.VersionLong())
@@ -165,7 +174,7 @@ func main() {
 			guard <- struct{}{}
 			go func(t string) {
 				defer wg.Done()
-				scanner := scan.Scanner{Target: t, Probes: probes.Probes, Arg_st: opts.Arg_st, Arg_sp: opts.Arg_sp, SrcIP: srcIP, Channel: comm}
+				scanner := scan.Scanner{Target: t, Probes: probes.Probes, Arg_st: opts.Arg_st, Arg_sp: opts.Arg_sp, Arg_b: opts.Arg_b, SrcIP: srcIP, Channel: comm}
 				scanner.Run()
 				<-guard
 			}(t)

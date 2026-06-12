@@ -18,6 +18,7 @@ type Scanner struct {
 	Probes  []probes.Probe
 	Arg_st  int
 	Arg_sp  bool
+	Arg_b   int     // Response buffer size
 	SrcIP   net.IP // nil = let kernel pick; non-nil = bind UDP socket to this local IP
 	Channel chan Message
 }
@@ -69,7 +70,7 @@ func (s Scanner) Run() {
 					func() {
 
 						for _, payload := range probe.Payloads {
-							recv_Data := make([]byte, 32)
+							recv_Data := make([]byte, s.Arg_b)
 
 							c, err := s.dialUDP(fmt.Sprint(ip, ":", port))
 
@@ -120,7 +121,7 @@ func (s Scanner) Run() {
 			for _, port := range probe.Port {
 				func() {
 					for _, payload := range probe.Payloads {
-						recv_Data := make([]byte, 32)
+						recv_Data := make([]byte, s.Arg_b)
 
 						now := time.Now()
 

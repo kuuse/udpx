@@ -11,6 +11,7 @@ Small enhancements to `udpx`:
 - `-q` : Quiet option. Suppresses banner and progress.
 - `-o -` : Write JSONL format to stdout instead of writing to file.  
    **TIP:** Combining `-q` and `-o -` may be useful for scripting. 
+- `-b bufsize` : Response buffer size in bytes (recommended 512 for complete response_data extraction, default 32). Valid range: 32-4096 bytes.
 - `--src-ip` : Source IP address option. Use an explicit IP address as source.
 - `--exclude TARGETS`  : List of comma-separated targets to be excluded from the scan, even if they are part of the overall target list.
 - `--excludefile FILE` : The same functionality as the `--exclude` option, except that the excluded targets are provided in a `FILE` rather than on the command line.  
@@ -90,6 +91,8 @@ Usage of ./udpx:
 Options:
   -c num
     	Maximum number of concurrent connections (default 32)
+  -b bufsize
+    	Response buffer size in bytes (recommended 512 for complete response_data, default 32)
   --exclude host1[,host2[,...]]
     	Comma-separated list of targets to exclude from the scan (IPs/hostnames/CIDRs/octet-ranges)
   --excludefile filename
